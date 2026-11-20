@@ -35,7 +35,6 @@ const PETALS = {
 const WORLD_SIZE = 3000;
 let selectedSlot = 0;
 
-// Стартовые данные игрока
 const defaultSave = {
   level: 1,
   xp: 0,
@@ -51,11 +50,17 @@ const defaultSave = {
     { type: 'basic', rarity: 0, count: 5 },
     { type: 'dust', rarity: 0, count: 5 },
     { type: 'triangle', rarity: 1, count: 5 },
-    { type: 'void', rarity: 8, count: 5 } // 5 Cosmic Void для проверки крафта в Divine!
+    { type: 'void', rarity: 8, count: 5 }
   ]
 };
 
-let saveData = JSON.parse(localStorage.getItem('myFlorrSave')) || defaultSave;
+let saveData;
+try {
+  saveData = JSON.parse(localStorage.getItem('myFlorrSave')) || defaultSave;
+  if (!saveData.slots || !saveData.inventory) saveData = defaultSave;
+} catch (e) {
+  saveData = defaultSave;
+}
 
 function saveGame() {
   localStorage.setItem('myFlorrSave', JSON.stringify(saveData));
@@ -75,9 +80,9 @@ const player = {
 function rebuildActivePetals() {
   player.activePetals = [];
   saveData.slots.forEach((slot, sIdx) => {
-    if (!slot) return;
+    if (!slot || !PETALS[slot.type]) return;
     const pData = PETALS[slot.type];
-    const rData = RARITIES[slot.rarity];
+    const rData = RARITIES[slot.rarity] || RARITIES[0];
     for (let i = 0; i < pData.count; i++) {
       player.activePetals.push({
         slotIdx: sIdx,
@@ -102,13 +107,13 @@ function addToInventory(type, rarity, amount = 1) {
   renderUI();
 }
 
-// Управление модалками и кнопками
 function closeModals() {
   document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
 }
 
 function toggleModal(id) {
   const el = document.getElementById(id);
+  if (!el) return;
   const isOpen = el.classList.contains('open');
   closeModals();
   if (!isOpen) {
@@ -127,14 +132,13 @@ window.addEventListener('keydown', e => {
 });
 
 function renderUI() {
-  // Хотбар слотов
   const hb = document.getElementById('hotbar');
   hb.innerHTML = '';
   saveData.slots.forEach((slot, idx) => {
     const div = document.createElement('div');
     div.className = 'slot' + (selectedSlot === idx ? ' selected' : '');
-    if (slot) {
-      const r = RARITIES[slot.rarity];
+    if (slot && PETALS[slot.type]) {
+      const r = RARITIES[slot.rarity] || RARITIES[0];
       div.style.background = r.color;
       div.innerHTML = `<div>${PETALS[slot.type].name}</div><div class="slot-rarity">${r.name}</div>`;
     } else {
@@ -149,12 +153,11 @@ function renderUI() {
     hb.appendChild(div);
   });
 
-  // Сумка
   const invGrid = document.getElementById('inv-grid');
   invGrid.innerHTML = '';
   saveData.inventory.sort((a, b) => b.rarity - a.rarity).forEach(item => {
-    if (item.count <= 0) return;
-    const r = RARITIES[item.rarity];
+    if (item.count <= 0 || !PETALS[item.type]) return;
+    const r = RARITIES[item.rarity] || RARITIES[0];
     const div = document.createElement('div');
     div.className = 'inv-item';
     div.style.background = r.color;
@@ -171,11 +174,10 @@ function renderUI() {
     invGrid.appendChild(div);
   });
 
-  // Окно крафта (5 -> 1)
   const craftGrid = document.getElementById('craft-grid');
   craftGrid.innerHTML = '';
   saveData.inventory.forEach(item => {
-    if (item.count < 5 || item.rarity >= RARITIES.length - 1) return;
+    if (item.count < 5 || item.rarity >= RARITIES.length - 1 || !PETALS[item.type]) return;
     const r = RARITIES[item.rarity];
     const nextR = RARITIES[item.rarity + 1];
     const div = document.createElement('div');
@@ -202,7 +204,6 @@ function renderUI() {
   });
 }
 
-// Мышь и игровой цикл
 const mouse = { x: canvas.width / 2, y: canvas.height / 2, left: false, right: false };
 window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 window.addEventListener('mousedown', e => { if (e.button === 0) mouse.left = true; if (e.button === 2) mouse.right = true; });
@@ -245,7 +246,6 @@ function draw() {
   ctx.save();
   ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
 
-  // Сетка
   ctx.strokeStyle = '#1b9657';
   ctx.lineWidth = 2;
   for (let x = 0; x <= WORLD_SIZE; x += 60) {
@@ -255,12 +255,10 @@ function draw() {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD_SIZE, y); ctx.stroke();
   }
 
-  // Границы
   ctx.strokeStyle = 'rgba(0,0,0,0.35)';
   ctx.lineWidth = 16;
   ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
 
-  // Отрисовка лепестков с учётом формы
   for (const p of player.activePetals) {
     const pData = PETALS[p.type];
     ctx.save();
@@ -282,10 +280,7 @@ function draw() {
     ctx.restore();
   }
 
-  // Игрок
   ctx.fillStyle = '#ffe763';
   ctx.strokeStyle = '#c9b037';
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.arc(player.x, player.y, player.rad, 0, Math.PI * 2);
-
