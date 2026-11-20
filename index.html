@@ -2,14 +2,14 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Florr Clone — Полная версия</title>
+  <title>Florr Clone — Cosmic & Divine Edition</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="game"></canvas>
 
   <div id="ui">
-    <!-- Верхняя панель: Биом, Уровень и Опыт -->
+    <!-- Верхняя панель -->
     <div id="top-bar">
       <div class="badge" id="zone-badge">Карта: Garden (Сад)</div>
       <div class="badge" id="level-badge">Уровень: 1 (0 / 100 XP)</div>
@@ -25,10 +25,32 @@
       <button class="menu-btn" id="btn-map">Карта<br>[M]</button>
     </div>
 
+    <div id="hint">ЛКМ — Атака | ПКМ — Щит | Клик по слоту внизу — заменить лепесток</div>
+
     <!-- Нижняя панель активных лепестков -->
     <div id="hotbar"></div>
+
+    <!-- Окно Сумки -->
+    <div class="modal" id="modal-inv">
+      <h2>
+        <span>Сумка (нажми, чтобы надеть в выбранный слот)</span>
+        <button class="close-btn" onclick="closeModals()">X</button>
+      </h2>
+      <div class="inv-grid" id="inv-grid"></div>
+    </div>
+
+    <!-- Окно Крафта -->
+    <div class="modal" id="modal-craft">
+      <h2>
+        <span>Крафт (нужно 5 одинаковых лепестков)</span>
+        <button class="close-btn" onclick="closeModals()">X</button>
+      </h2>
+      <div class="inv-grid" id="craft-grid"></div>
+      <div id="craft-msg">Выбери лепесток (от 5 шт.) для улучшения редкости!</div>
+    </div>
   </div>
 
   <script src="game.js"></script>
 </body>
 </html>
+
