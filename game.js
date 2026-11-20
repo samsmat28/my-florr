@@ -74,7 +74,18 @@ function saveGame() {
 const nameInput = document.getElementById('player-name-input');
 nameInput.value = saveData.playerName;
 
-document.getElementById('btn-play').onclick = () => {
+function startGame() {
+  const newName = nameInput.value.trim();
+  saveData.playerName = newName ? newName : 'Flower';
+  saveGame();
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('ui').style.display = 'block';
+  isPlaying = true;
+  rebuildActivePetals();
+  renderUI();
+}
+document.getElementById('btn-play').onclick = startGame;
+
   const newName = nameInput.value.trim();
   saveData.playerName = newName ? newName : 'Flower';
   saveGame();
