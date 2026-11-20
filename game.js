@@ -22,7 +22,7 @@ const RARITIES = [
 ];
 
 function getRarity(idx) {
-  return RARITIES[idx] ? RARITIES[idx] : RARITIES.at(0);
+  return RARITIES[idx] || RARITIES[0];
 }
 
 const PETALS = {
@@ -39,7 +39,7 @@ let selectedSlot = 0;
 let isPlaying = false;
 
 const defaultSave = {
-  playerName: 'Flower',
+  playerName: 'Matvei',
   level: 1,
   xp: 0,
   nextXp: 100,
@@ -62,7 +62,7 @@ let saveData;
 try {
   saveData = JSON.parse(localStorage.getItem('myFlorrSave')) || defaultSave;
   if (!saveData.slots || !saveData.inventory) saveData = defaultSave;
-  if (!saveData.playerName) saveData.playerName = 'Flower';
+  if (!saveData.playerName) saveData.playerName = 'Matvei';
 } catch (e) {
   saveData = defaultSave;
 }
@@ -72,29 +72,25 @@ function saveGame() {
 }
 
 const nameInput = document.getElementById('player-name-input');
-nameInput.value = saveData.playerName;
+if (nameInput) nameInput.value = saveData.playerName;
 
 function startGame() {
-  const newName = nameInput.value.trim();
-  saveData.playerName = newName ? newName : 'Flower';
+  if (nameInput) {
+    const newName = nameInput.value.trim();
+    saveData.playerName = newName ? newName : 'Matvei';
+  }
   saveGame();
-  document.getElementById('start-screen').style.display = 'none';
-  document.getElementById('ui').style.display = 'block';
+  const startEl = document.getElementById('start-screen');
+  const uiEl = document.getElementById('ui');
+  if (startEl) startEl.style.display = 'none';
+  if (uiEl) uiEl.style.display = 'block';
   isPlaying = true;
   rebuildActivePetals();
   renderUI();
 }
-document.getElementById('btn-play').onclick = startGame;
 
-  const newName = nameInput.value.trim();
-  saveData.playerName = newName ? newName : 'Flower';
-  saveGame();
-  document.getElementById('start-screen').style.display = 'none';
-  document.getElementById('ui').style.display = 'block';
-  isPlaying = true;
-  rebuildActivePetals();
-  renderUI();
-};
+const playBtn = document.getElementById('btn-play');
+if (playBtn) playBtn.onclick = startGame;
 
 const player = {
   x: WORLD_SIZE / 2,
@@ -142,7 +138,6 @@ function closeModals() {
 }
 
 function toggleModal(id) {
-  if (!isPlaying) return;
   const el = document.getElementById(id);
   if (!el) return;
   const isOpen = el.classList.contains('open');
@@ -153,8 +148,10 @@ function toggleModal(id) {
   }
 }
 
-document.getElementById('btn-inv').onclick = () => toggleModal('modal-inv');
-document.getElementById('btn-craft').onclick = () => toggleModal('modal-craft');
+const invBtn = document.getElementById('btn-inv');
+const craftBtn = document.getElementById('btn-craft');
+if (invBtn) invBtn.onclick = () => toggleModal('modal-inv');
+if (craftBtn) craftBtn.onclick = () => toggleModal('modal-craft');
 
 window.addEventListener('keydown', e => {
   if (!isPlaying) return;
@@ -165,75 +162,85 @@ window.addEventListener('keydown', e => {
 
 function renderUI() {
   const hb = document.getElementById('hotbar');
-  hb.innerHTML = '';
-  saveData.slots.forEach((slot, idx) => {
-    const div = document.createElement('div');
-    div.className = 'slot' + (selectedSlot === idx ? ' selected' : '');
-    if (slot && PETALS[slot.type]) {
-      const r = getRarity(slot.rarity);
-      div.style.background = r.color;
-      div.innerHTML = `<div>${PETALS[slot.type].name}</div><div class="slot-rarity">${r.name}</div>`;
-    } else {
-      div.style.background = 'rgba(0,0,0,0.45)';
-      div.textContent = 'Пусто';
-    }
-    div.onclick = () => {
-      selectedSlot = idx;
-      renderUI();
-      toggleModal('modal-inv');
-    };
-    hb.appendChild(div);
-  });
+  if (hb) {
+    hb.innerHTML = '';
+    saveData.slots.forEach((slot, idx) => {
+      const div = document.createElement('div');
+      div.className = 'slot' + (selectedSlot === idx ? ' selected' : '');
+      if (slot && PETALS[slot.type]) {
+        const r = getRarity(slot.rarity);
+        div.style.background = r.color;
+        div.innerHTML = `<div>${PETALS[slot.type].name}</div><div class="slot-rarity">${r.name}</div>`;
+      } else {
+        div.style.background = 'rgba(0,0,0,0.45)';
+        div.textContent = 'Пусто';
+      }
+      div.onclick = () => {
+        selectedSlot = idx;
+        renderUI();
+        toggleModal('modal-inv');
+      };
+      hb.appendChild(div);
+    });
+  }
 
   const invGrid = document.getElementById('inv-grid');
-  invGrid.innerHTML = '';
-  saveData.inventory.sort((a, b) => b.rarity - a.rarity).forEach(item => {
-    if (item.count <= 0 || !PETALS[item.type]) return;
-    const r = getRarity(item.rarity);
-    const div = document.createElement('div');
-    div.className = 'inv-item';
-    div.style.background = r.color;
-    div.innerHTML = `<span class="inv-count">x${item.count}</span><div>${PETALS[item.type].name}</div><div class="slot-rarity">${r.name}</div>`;
-    div.onclick = () => {
-      const old = saveData.slots[selectedSlot];
-      if (old) addToInventory(old.type, old.rarity, 1);
-      item.count--;
-      saveData.slots[selectedSlot] = { type: item.type, rarity: item.rarity };
-      saveGame();
-      rebuildActivePetals();
-      renderUI();
-    };
-    invGrid.appendChild(div);
-  });
+  if (invGrid) {
+    invGrid.innerHTML = '';
+    saveData.inventory.sort((a, b) => b.rarity - a.rarity).forEach(item => {
+      if (item.count <= 0 || !PETALS[item.type]) return;
+      const r = getRarity(item.rarity);
+      const div = document.createElement('div');
+      div.className = 'inv-item';
+      div.style.background = r.color;
+      div.innerHTML = `<span class="inv-count">x${item.count}</span><div>${PETALS[item.type].name}</div><div class="slot-rarity">${r.name}</div>`;
+      div.onclick = () => {
+        const old = saveData.slots[selectedSlot];
+        if (old) addToInventory(old.type, old.rarity, 1);
+        item.count--;
+        saveData.slots[selectedSlot] = { type: item.type, rarity: item.rarity };
+        saveGame();
+        rebuildActivePetals();
+        renderUI();
+      };
+      invGrid.appendChild(div);
+    });
+  }
 
   const craftGrid = document.getElementById('craft-grid');
-  craftGrid.innerHTML = '';
-  saveData.inventory.forEach(item => {
-    if (item.count < 5 || item.rarity >= RARITIES.length - 1 || !PETALS[item.type]) return;
-    const r = getRarity(item.rarity);
-    const nextR = getRarity(item.rarity + 1);
-    const div = document.createElement('div');
-    div.className = 'inv-item';
-    div.style.background = r.color;
-    div.innerHTML = `<span class="inv-count">${item.count}/5</span><div>${PETALS[item.type].name}</div><div class="slot-rarity">${r.name} → ${nextR.name}</div>`;
-    div.onclick = () => {
-      item.count -= 5;
-      const msg = document.getElementById('craft-msg');
-      if (Math.random() < r.craftChance) {
-        addToInventory(item.type, item.rarity + 1, 1);
-        msg.style.color = '#7eef6d';
-        msg.textContent = `УСПЕХ! Создан ${nextR.name} ${PETALS[item.type].name}!`;
-      } else {
-        const back = 1 + Math.floor(Math.random() * 3);
-        item.count += back;
-        msg.style.color = '#ff6b6b';
-        msg.textContent = `Неудача! Сгорело ${5 - back} шт. (Шанс был ${Math.round(r.craftChance * 100)}%)`;
-        saveGame();
-        renderUI();
-      }
-    };
-    craftGrid.appendChild(div);
-  });
+  if (craftGrid) {
+    craftGrid.innerHTML = '';
+    saveData.inventory.forEach(item => {
+      if (item.count < 5 || item.rarity >= RARITIES.length - 1 || !PETALS[item.type]) return;
+      const r = getRarity(item.rarity);
+      const nextR = getRarity(item.rarity + 1);
+      const div = document.createElement('div');
+      div.className = 'inv-item';
+      div.style.background = r.color;
+      div.innerHTML = `<span class="inv-count">${item.count}/5</span><div>${PETALS[item.type].name}</div><div class="slot-rarity">${r.name} → ${nextR.name}</div>`;
+      div.onclick = () => {
+        item.count -= 5;
+        const msg = document.getElementById('craft-msg');
+        if (Math.random() < r.craftChance) {
+          addToInventory(item.type, item.rarity + 1, 1);
+          if (msg) {
+            msg.style.color = '#7eef6d';
+            msg.textContent = `УСПЕХ! Создан ${nextR.name} ${PETALS[item.type].name}!`;
+          }
+        } else {
+          const back = 1 + Math.floor(Math.random() * 3);
+          item.count += back;
+          if (msg) {
+            msg.style.color = '#ff6b6b';
+            msg.textContent = `Неудача! Сгорело ${5 - back} шт. (Шанс был ${Math.round(r.craftChance * 100)}%)`;
+          }
+          saveGame();
+          renderUI();
+        }
+      };
+      craftGrid.appendChild(div);
+    });
+  }
 }
 
 const mouse = { x: canvas.width / 2, y: canvas.height / 2, left: false, right: false };
@@ -244,6 +251,7 @@ window.addEventListener('contextmenu', e => e.preventDefault());
 
 let lastTime = performance.now();
 rebuildActivePetals();
+renderUI();
 
 function update(dt) {
   player.angle += 3.2 * dt;
@@ -283,19 +291,4 @@ function draw() {
   ctx.strokeStyle = '#1b9657';
   ctx.lineWidth = 2;
   for (let x = 0; x <= WORLD_SIZE; x += 60) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, WORLD_SIZE); ctx.stroke();
-  }
-  for (let y = 0; y <= WORLD_SIZE; y += 60) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD_SIZE, y); ctx.stroke();
-  }
-
-  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-  ctx.lineWidth = 16;
-  ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
-
-  for (const p of player.activePetals) {
-    const pData = PETALS[p.type];
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.fillStyle = pData.color;
 
