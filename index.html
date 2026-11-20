@@ -69,7 +69,7 @@
       <h1 class="game-title">florr.io <span>CLONE</span></h1>
       <p class="game-sub">Cosmic & Divine Edition</p>
       <input type="text" id="player-name-input" maxlength="16" placeholder="Введи имя цветка..." value="Flower">
-      <button id="btn-play">ИГРАТЬ</button>
+      <button id="btn-play" onclick="document.getElementById('start-screen').style.display='none'; document.getElementById('ui').style.display='block'; if(typeof startGame==='function') startGame();">ИГРАТЬ</button>
     </div>
   </div>
 
